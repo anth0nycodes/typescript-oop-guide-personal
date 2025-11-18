@@ -29,14 +29,16 @@ class Student {
     this.enrolledCourses.push(courseName);
   }
 
-  drop(courseName: string) {
-    if (!this.enrolledCourses.includes(courseName)) {
+  drop(course: Course) {
+    if (!this.enrolledCourses.includes(course.courseName)) {
       throw new Error("You can't drop a course you are not enrolled in");
     }
 
     this.enrolledCourses = this.enrolledCourses.filter(
-      (course) => course !== courseName,
+      (courseName) => courseName !== course.courseName,
     );
+
+    course.students = course.students.filter((s) => s !== this);
 
     return this.enrolledCourses;
   }
@@ -79,7 +81,7 @@ class Course {
     }
 
     this.students = this.students.filter((s) => s !== student);
-    student.drop(this.courseName);
+    student.drop(this);
   }
 
   getEnrollmentCount() {
@@ -93,12 +95,44 @@ class Course {
 
 const student1 = new Student("Alice", "S001");
 const student2 = new Student("Bob", "S002");
+const student3 = new Student("Charlie", "S003");
 
-const course = new Course("TypeScript 101", "Dr. Smith", 2);
+const course1 = new Course("TypeScript 101", "Dr. Smith", 2);
+const course2 = new Course("JavaScript Basics", "Prof. Johnson", 3);
 
-course.addStudent(student1);
-course.addStudent(student2);
-console.log(course.getEnrollmentCount()); // 2
+// Test adding students to course
+course1.addStudent(student1);
+course1.addStudent(student2);
 
-console.log(course.isFull()); // true
+console.log(course1.getEnrollmentCount()); // 2
+console.log(course1.isFull()); // true
 console.log(student1.listCourses()); // ["TypeScript 101"]
+
+// Test Student enrollment methods
+console.log(student1.isEnrolledIn("TypeScript 101")); // true
+console.log(student1.isEnrolledIn("JavaScript Basics")); // false
+
+// Test edge case: adding student to full course
+course1.addStudent(student3);
+console.log(course1.getEnrollmentCount()); // 2 (should still be 2, add failed)
+console.log(student3.listCourses()); // [] (not enrolled in any courses)
+
+// Test student enrolling in multiple courses
+course2.addStudent(student1);
+course2.addStudent(student2);
+console.log(student1.listCourses()); // ["TypeScript 101", "JavaScript Basics"]
+
+// Test removing student from course
+course1.removeStudent(student1);
+console.log(course1.getEnrollmentCount()); // 1
+console.log(course1.isFull()); // false
+console.log(student1.listCourses()); // ["JavaScript Basics"]
+
+// Test Student drop method
+student2.drop(course2);
+console.log(student2.listCourses()); // ["TypeScript 101"]
+console.log(course2.getEnrollmentCount()); // 1 (only student1 now)
+
+// Test edge case: dropping a course not enrolled in
+student3.drop(course1);
+console.log(student3.listCourses()); // [] (unchanged, wasn't enrolled)
